@@ -18,6 +18,7 @@ class CreateFilesTable extends Migration
             $table->integer('folder_id');
             $table->string('folder_name')->nullable();
             $table->string('name');
+            $table->string('md5')->nullable();
             $table->string('time')->nullable();
             $table->string('type')->nullable();
             $table->string('troupe')->nullable();

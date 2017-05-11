@@ -66,6 +66,7 @@ class FilesController extends Controller
         $folder->files()->create([
             'folder_name'=>$folder->name,
             'name'=>$request->name,
+            'md5'=>session('md5'),
             'time'=>$request->time,
             'type'=>$request->type,
             'troupe'=>$request->troupe,
@@ -115,15 +116,18 @@ class FilesController extends Controller
     public function update(Request $request, $id)
     {
         $file = File::findOrFail($id);
+        $md5 = $file->md5;
         //todo 假如存在旧文件，删除旧文件
         if(!empty($file->path)){
             Storage::delete($file->path);
+            $md5 = session('md5');
         }
         //todo 拿到新文件持久化路径
         $aim_path = $this->repo->moveFile($request->path);
 
         $file->update([
             'name'=>$request->name,
+            'md5' => $md5,
             'time'=>$request->time,
             'type'=>$request->type,
             'troupe'=>$request->troupe,
@@ -163,5 +167,24 @@ class FilesController extends Controller
         $count = $files->count();
         $files = $files->get();
         return view('files.search', compact('files'))->withErrors($count);
+    }
+
+    public function check(Request $request)
+    {
+        $md5 = $request->md5;
+        $file = File::where('md5', $md5)->first();
+        if(!$file){
+            $res = [
+                'errno' => 0
+            ];
+            session(['md5'=>$md5]);
+        }else{
+            $res = [
+                'errno' => 1,
+                'data' =>'文件已存在于【'.$file->folder_name.'】文件夹，无需上传'
+            ];
+            session(['md5'=>null]);
+        }
+        return $res;
     }
 }

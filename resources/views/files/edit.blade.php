@@ -95,12 +95,11 @@
                 </div>
             </div>
             <style>
-                #textarea2{
-                    min-height: 25vh;
-                    min-width: 60vw;
+                .wangEditor-container{
+                    width:60vw;
                 }
+
             </style>
-            <br>
             <br>
             <div class="uk-form-row">
                 <div class="uk-grid">
@@ -124,12 +123,36 @@
 @endsection
 
 @section('customerEditJS')
+    <script type="text/javascript" src="{{asset('js/wang/js/wangEditor.min.js')}}"></script>
+    <script type="text/javascript" src="{{asset('js/md5.js')}}"></script>
     <script type="text/javascript">
         function up(){
             //checkMD5
+            var file = $('#aetherupload-file')[0].files[0]
+            var fileReader = new FileReader();
+            var spark = new SparkMD5();
+            blobSlice = File.prototype.mozSlice || File.prototype.webkitSlice || File.prototype.slice
+            var currentChunk = 0,
+                chunkSize = 2097152,    //切片大小2MB
+                start = currentChunk * chunkSize,
+                end = start + chunkSize >= file.size ? file.size : start + chunkSize,  //若文件小于2mb则整个文件
+                currentFile = blobSlice.call(file, start, end)
 
-            //uploadFile
-            AetherUpload.upload('../temp')
+            fileReader.readAsBinaryString(currentFile)
+            fileReader.onload = function(e){    //
+                spark.appendBinary(e.target.result)
+                var hexHash = spark.end();                      // hex hash
+
+                $.post("{{route('files.check')}}", {md5:hexHash, _token:"{{csrf_token()}}"}, function (res) {
+                    if(res.errno === 0){
+                        //uploadFile
+                        AetherUpload.upload('../temp')
+                    }else{
+                        file = null;
+                        alert(res.data)
+                    }
+                })
+            }
         }
 
         //aetherUpload

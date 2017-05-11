@@ -77,7 +77,6 @@
                     <div id="aetherupload-progressbar" style="background:blue;height:6px;width:0;"></div><!--need to have an id "aetherupload-progressbar" here for the progress bar-->
                 </div>
             </div>
-            <br>
             <div class="uk-form-row">
                 <div class="uk-grid">
                     <div class="uk-width-1-8">
@@ -100,18 +99,40 @@
 <style>
     .uk-modal-dialog-file{
         width:50vw;
-        height:83vh;
+        height:85vh;
     }
 </style>
 @section('customerJS')
     <script type="text/javascript" src="{{asset('js/wang/js/wangEditor.min.js')}}"></script>
+    <script type="text/javascript" src="{{asset('js/md5.js')}}"></script>
     <script type="text/javascript">
         function up(){
             //checkMD5
+            var file = $('#aetherupload-file')[0].files[0]
+            var fileReader = new FileReader();
+            var spark = new SparkMD5();
+            blobSlice = File.prototype.mozSlice || File.prototype.webkitSlice || File.prototype.slice
+            var currentChunk = 0,
+                chunkSize = 2097152,    //切片大小2MB
+                start = currentChunk * chunkSize,
+                end = start + chunkSize >= file.size ? file.size : start + chunkSize,  //若文件小于2mb则整个文件
+                currentFile = blobSlice.call(file, start, end)
 
-            //uploadFile
+            fileReader.readAsBinaryString(currentFile)
+            fileReader.onload = function(e){    //
+                spark.appendBinary(e.target.result)
+                var hexHash = spark.end();                      // hex hash
 
-            AetherUpload.upload('../temp')
+                $.post("{{route('files.check')}}", {md5:hexHash, _token:"{{csrf_token()}}"}, function (res) {
+                        if(res.errno === 0){
+                            //uploadFile
+                            AetherUpload.upload('../temp')
+                        }else{
+                            file = null;
+                            alert(res.data)
+                        }
+                })
+            }
         }
         //aetherUpload
         AetherUpload.success = function () {

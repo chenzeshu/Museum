@@ -21,8 +21,10 @@ Route::group(['middleware'=>'auth'],function (){
 
     Route::get('count', 'CountController@index');
     Route::resource('/folders', 'FoldersController'); //指路由名称为folders
+
     Route::get('/files/download/{fileid}', 'FilesController@download')->name('files.download');
     Route::post('/files/search/', 'FilesController@search')->name('files.search');
+    Route::post('/files/check', 'FilesController@check')->name('files.check');  //md5校验
     Route::resource('/files', 'FilesController'); //指路由名称为files
 });
 
